@@ -1,0 +1,372 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<h2>Rutas</h2>
+<h2>@ViewBag.message</h2>
+<h2>@ViewBag.Time</h2>
+<div class="row">
+    <div class="col-md-4">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Average Time</th>
+                    <th>Won CrossOvers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Ordered CrossOver</td>
+                    <td>@ViewBag.times[0]</td>
+                    <td>@ViewBag.won[0]<text>%</text></td>
+                </tr>
+                <tr>
+                    <td>Half CrossOver</td>
+                    <td>@ViewBag.times[1]</td>
+                    <td>@ViewBag.won[1]<text>%</text></td>
+                </tr>
+                <tr>
+                    <td>SCX</td>
+                    <td>@ViewBag.times[2]</td>
+                    <td>@ViewBag.won[2]<text>%</text></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-8">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Cluster</th>
+                    <th>Permutation</th>
+                    <th>Total Time</th>
+                    <th>Method</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(var i=0; i < ViewBag.Count; i++)
+                {
+                    <tr>
+                        <td>@(i+1)</td>
+                        <td>
+                            @foreach (var item in ViewBag.permutations[i])
+                            {
+                                @item<text>&nbsp;</text>
+                            }
+                        </td>
+                        <td>@ViewBag.distance[i]</td>
+                        <td>@ViewBag.type[i]</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<style>
+    #wrapper {
+        position: relative;
+    }
+
+
+    #over_map {
+        border: 1px solid #ddd;
+        background-color: #ebebe0;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 99;
+    }
+
+        #over_map table {
+            border-collapse: collapse;
+        }
+
+            #over_map table td, #over_map table th {
+                border: 1px solid #ddd;
+                padding: 6px;
+            }
+
+        #over_map th {
+            text-align: left;
+            background-color: #0000ff;
+            color: white;
+        }
+
+        #over_map tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #over_map tr:hover {
+            background-color: #ddd;
+        }
+
+    #map {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        background-color: grey;
+    }
+
+
+    .teal {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: teal;
+    }
+
+
+    .yellow {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: yellow;
+    }
+
+
+    .blue {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: blue;
+    }
+
+    .olive {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: olive;
+    }
+
+    .silver {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: silver;
+    }
+
+    .green {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: green;
+    }
+
+    .red {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: red;
+    }
+
+    .aqua {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: aqua;
+    }
+
+    .purple {
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        background: purple;
+    }
+</style>
+
+
+
+<div id="wrapper">
+    <div id="map">
+
+
+        <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCXFpgKDf2FZCNPrBVljYzVUejn75ryMNs&callback=initMap">
+        </script>
+
+    </div>
+    <div id="over_map">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ocultar</th>
+                    <th>Color</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var item in ViewBag.Counter)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox" onclick="ocultar(this)" id="@item" />
+
+                        </td>
+                        <td>
+                            <div class="@ViewBag.colors[@item]"></div>
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    var colourArray = ['purple', 'aqua', 'red', 'green', 'yellow', 'olive', 'blue', 'yellow', 'teal'];
+
+
+    var cur = 0;
+    var requestArray = [], renderArray = [];
+
+
+    var count = @Html.Raw(Json.Encode(ViewBag.Count));
+    var array = @Html.Raw(Json.Encode(ViewBag.coordinates));
+    var arrayLast = @Html.Raw(Json.Encode(ViewBag.lastLocation));
+
+    var counter = 0;
+
+    var map;
+
+
+
+    var markers = [];
+
+
+
+
+
+    function initMap() {
+
+
+
+        var endImage = new google.maps.MarkerImage(
+            '/Content/icon.png',
+            null,
+            null,
+            new google.maps.Point(20,20),
+            new google.maps.Size(40,40)
+        );
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 7,
+            center: { lat: 41.85, lng: -87.65 }
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsDisplay = new google.maps.DirectionsRenderer();
+
+        directionsDisplay.setMap(map);
+
+
+
+        var iniciolat, iniciolng, finallat, finallng;
+
+        for (var i = 0; i < count; i++) {
+
+            var waypts = [];
+
+            var last = counter + (arrayLast[i]*2);
+            last--;
+            last--;
+            iniciolat = array[counter];
+            counter++;
+            iniciolng = array[counter];
+            counter++;
+            finallat = array[last];
+            last++;
+            finallng = array[last];
+
+
+            for (var j = 0; j < arrayLast[i]; j++) {
+                var rlast = arrayLast[i];
+                rlast--
+                if (j != 0 && j != rlast) {
+                    var middlelat = array[counter];
+                    counter++;
+                    var middlelng = array[counter];
+                    counter++;
+                    waypts.push({
+                        location: { lat: middlelat, lng: middlelng },
+                        stopover: true
+                    });
+                }
+            }
+
+            var request = {
+                origin: { lat: iniciolat, lng: iniciolng },
+                destination: { lat: finallat, lng: finallng },
+                waypoints: waypts,
+                optimizeWaypoints: false,
+                travelMode: 'DRIVING'
+            }
+            requestArray.push(request);
+            counter = ((i + 1) * 40);
+
+        }
+
+
+
+        if (requestArray.length > 0) {
+            directionsService.route(requestArray[cur], directionResults);
+        }
+
+        function directionResults(result, status) {
+
+            renderArray[cur] = new google.maps.DirectionsRenderer();
+            renderArray[cur].setMap(map);
+            renderArray[cur].setOptions({ polylineOptions: { strokeColor: colourArray[cur] } });
+            renderArray[cur].suppressMarkers = true;
+            renderArray[cur].setDirections(result);
+            var legs = result.routes[0].legs.length;
+            legs--;
+            var leg = result.routes[0].legs[legs];
+
+            var marker = new google.maps.Marker({
+                position: leg.end_location,
+                map: map,
+                icon: endImage
+            });
+            markers.push(marker);
+            cur++;
+            if (cur < requestArray.length) {
+                directionsService.route(requestArray[cur], directionResults);
+            }
+        }
+
+
+    }
+
+
+    function ocultar(item) {
+
+        var id = item.id;
+        if (item.checked) {
+            renderArray[id].setMap(null);
+            markers[id].setMap(null);
+        }
+        else {
+            renderArray[id].setMap(map);
+            markers[id].setMap(map);
+        }
+
+
+    }
+
+
+
+
+
+
+</script>
