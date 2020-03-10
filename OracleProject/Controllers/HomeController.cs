@@ -1,5 +1,6 @@
 ﻿using OracleProject.Models;
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,6 +15,9 @@ namespace OracleProject.Controllers
         double[,] globalDistances;
         double[] distanceToEnd;
         double[,] distanceToStart;
+
+
+        //Makes a relation between the clusterId in the database and the locationId
         int[] clusterId = { 101, 102, 103, 104, 105 };
         public double[] distancesToEnd(int numberOfPoints)
         {
@@ -25,7 +29,7 @@ namespace OracleProject.Controllers
             }
             return distances;
         }
-
+        //Loads the array with distances to the start
         public double[,] distancesToStart(int numberOfPoints, int clusters)
         {
             double[,] distances = new double[numberOfPoints, clusters];
@@ -43,7 +47,7 @@ namespace OracleProject.Controllers
         }
 
 
-
+        //Fills an array with the distances
         public double[,] loadDistances(int numberOfPoints)
         {
             double[,] distance = new double[numberOfPoints, numberOfPoints];
@@ -73,7 +77,7 @@ namespace OracleProject.Controllers
         }
 
 
-
+        //Fills array with negatives
         public int[] createArrayWithNegatives(int size)
         {
             int[] array = new int[size];
@@ -84,7 +88,7 @@ namespace OracleProject.Controllers
             return array;
         }
 
-
+        //Shuffles the permutation
         public void shuffle(int[] array, int size)
         {
             Random random = new Random();
@@ -113,7 +117,7 @@ namespace OracleProject.Controllers
             }
             return true;
         }
-
+        //Checks if permutation exists in array
         public bool PermutationAlreadyExists(int[] permutation, int size, int totalChromosomes, Chromosome[] chromosomes)
         {
             for (int i = 0; i < totalChromosomes; i++)
@@ -129,7 +133,7 @@ namespace OracleProject.Controllers
             }
             return false;
         }
-
+        //Generates RandomPermutation
         public int[] GenerateRandomPermutation(int size, int seedParameter, int totalChromosomes, Chromosome[] chromosomes, Point[] points)
         {
             int[] permutation = new int[size];
@@ -148,7 +152,7 @@ namespace OracleProject.Controllers
 
             return permutation;
         }
-
+        //Calculates time
         public void setChromosomeTotalTime(Chromosome chromosome, Point[] points, int numberOfPoints)
         {
             double totalTime = 0;
@@ -178,7 +182,7 @@ namespace OracleProject.Controllers
 
 
 
-
+        //Creates a randomChromosome
         public void CreateRandomChromosome(Chromosome chromosome, int seedParameter, int numberPoints, Point[] points, int generation, int totalChromosomes, Chromosome[] chromosomes)
         {
             chromosome.permutation = GenerateRandomPermutation(numberPoints + 2, seedParameter, totalChromosomes, chromosomes, points);
@@ -186,19 +190,19 @@ namespace OracleProject.Controllers
 
 
         }
-
+        //Picks a random index
         public void pickRandomIndexRange(int ptrInd1, int ptrInd2, int size, int seedParameter)
         {
             Random random = new Random(seedParameter);
             ptrInd1 = random.Next(0, size / 2);
             ptrInd2 = ptrInd1 + random.Next(0, size / 2);
         }
-
+        //Checks if the value is in range
         public bool isInRange(int value, int lowValue, int highValue)
         {
             return (value >= lowValue && value <= highValue);
         }
-
+        //Passes the values of the first parent
         public void passSomeValuesDirectly(int size, int[] newArray, int leftIndex, int rightIndex, int[] parentArr)
         {
             for (int i = 1; i <= size; i++)
@@ -213,7 +217,7 @@ namespace OracleProject.Controllers
                 }
             }
         }
-
+        //Checks if the valueExistsInAnArray
         public bool valueExistsInArray(int size, int value, int[] array)
         {
             for (int i = 1; i < size; i++)
@@ -225,7 +229,7 @@ namespace OracleProject.Controllers
             }
             return false;
         }
-
+        //Copies the values of the second parent
         public void passTheRestOfValues(int size, int[] newArray, int leftIndex, int rightIndex, int[] parentArr)
         {
             int parentArrIndex = 1;
@@ -246,7 +250,7 @@ namespace OracleProject.Controllers
             newArray[size + 1] = 100;
         }
 
-
+        //Finds the location in the array of a number
         public int FindInArray(int[] array, int value)
         {
             int index = -1;
@@ -261,24 +265,39 @@ namespace OracleProject.Controllers
             return index;
         }
 
-
+        //Performs the ScxCrossover
         public int[] scxCrossOver(int size, int[] arr1, int[] arr2, int seedParameter)
         {
+            //Creates an array with negatives
             int[] newArray = new int[size + 2];
             newArray = createArrayWithNegatives(size + 2);
+
+            //The start and end are always the same
             newArray[0] = arr1[0];
             newArray[size + 1] = 100;
+
+            //The node is always the first node of the first parent.
             int node = arr1[0];
+            
             int index = 2;
+
+            //Gets the cluster
             int cluster = FindInArray(clusterId, node);
+
+            //gets the index next to where the node appears
             int index1 = FindInArray(arr1, node) + 1;
             int index2 = FindInArray(arr2, node) + 1;
+
+            //If the node next to the array is the last, it starts from the beggining
             if (index2 == size + 1)
             {
                 index2 = 0;
             }
+            //gest the distance between the node and the one next
             double distance1 = distanceToStart[arr1[index1], cluster];
             double distance2 = distanceToStart[arr2[index2], cluster];
+
+            //The one with less distance is the one that is stored
             if (distance1 > distance2)
             {
                 newArray[index1] = arr2[index2];
@@ -361,7 +380,7 @@ namespace OracleProject.Controllers
         }
 
 
-
+        //Selects a random value, All the values from the first parent until the random value, are copied to the children. The mother fills the rest
         public int[] performDoubleCrossOver(int size, int[] arr1, int[] arr2, int seedParameter)
         {
             int[] newArray = new int[size + 2];
@@ -384,7 +403,7 @@ namespace OracleProject.Controllers
             return newArray;
         }
 
-
+        //Ordered CrossOver. 2 values are selected. THey represent the range that is going to be copyed from the first parent
         public int[] PerformOrderedCrossOver(int size, int[] arr1, int[] arr2, int seedParameter, Chromosome[] chromosomes, int totalChromosomes)
         {
 
@@ -415,7 +434,7 @@ namespace OracleProject.Controllers
 
 
 
-
+        //Performs mutation. Swaps two different values from an array
         public void PerformMutation(int size, int[] arr)
         {
             int index1 = 1;
@@ -437,6 +456,7 @@ namespace OracleProject.Controllers
             Random r = new Random(childId);
             int[] primes = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47 };
             int[] childPermutation;
+            //The parameter type determines which of the 3 crossover methods is going to be used
             switch (type)
             {
                 case 1:
@@ -460,7 +480,7 @@ namespace OracleProject.Controllers
                         break;
                     }
             }
-
+            //Performs the mutation of the random chromosome
             if (childId % totalChromosomes == totalChromosomes / 2)
             {
                 PerformMutation(c1.pointsNumber, childPermutation);
@@ -469,11 +489,11 @@ namespace OracleProject.Controllers
             return childPermutation;
         }
 
-
+        //Creates a ChildChromosome
         public Chromosome CreateChildChromosome(Chromosome c1, Chromosome c2, int totalChromosomes, int childId, int generation, int numberOfPoints, Point[] points, Chromosome[] chromosomes,int type)
         {
             Chromosome childChromosome = new Chromosome();
-
+            //Creates the permution from the parents
             childChromosome.permutation = CreatePermutationFromParents(c1, c2, childId, totalChromosomes, chromosomes,type);
             childChromosome.pointsNumber = c1.pointsNumber;
             childChromosome.generation = generation;
@@ -483,12 +503,12 @@ namespace OracleProject.Controllers
             {
                 return c1;
             }
-
+            //Calculates time of the new chromosome
             setChromosomeTotalTime(childChromosome, points, numberOfPoints);
             return childChromosome;
 
         }
-
+        //Calculates factorial
         public double factorial(int numberPoints)
         {
             double number = 1;
@@ -499,6 +519,7 @@ namespace OracleProject.Controllers
             return number;
         }
 
+        //Gives the best Chromosome
         public Chromosome Solve(int numberPoints, Point[] points, int type)
         {
             double totalChromosomes;
@@ -507,7 +528,7 @@ namespace OracleProject.Controllers
 
 
 
-
+            //If the factorial of the number of Points is less than 100, it can be solved in one generation
             if (factorial(numberPoints) < 100)
             {
                 totalChromosomes = factorial(numberPoints);
@@ -534,9 +555,11 @@ namespace OracleProject.Controllers
                 return chromosomes2[0];
 
             }
+            //Number of chromomes
             totalChromosomes = 100;
             Chromosome[] chromosomes = new Chromosome[(int)totalChromosomes];
 
+            //Generates each Chromosome with a permutation full of -1
             for (int i = 0; i < totalChromosomes; i++)
             {
                 Chromosome newChromosome = new Chromosome();
@@ -546,6 +569,8 @@ namespace OracleProject.Controllers
                 newChromosome.type = type;
                 chromosomes[i] = newChromosome;
             }
+
+            //Creates a Random Chromosome
             for (int i = 0; i < totalChromosomes; i++)
             {
                 CreateRandomChromosome(chromosomes[i], i + 1, numberPoints, points, 0, (int)totalChromosomes, chromosomes);
@@ -564,9 +589,10 @@ namespace OracleProject.Controllers
             //    setChromosomeTotalTime(test, points, numberPoints);
             //}
 
-
+            //Evaluate each generation
             for (int i = 0; i < totalGenerations; i++)
             {
+                //Sorts the array of chromosomes by its duration
                 Array.Sort(chromosomes, delegate (Chromosome chromosome1, Chromosome chromosome2)
                 {
                     return chromosome1.totalDistance.CompareTo(chromosome2.totalDistance);
@@ -575,6 +601,7 @@ namespace OracleProject.Controllers
                 {
                     for (int j = 0; j < 25; j++)
                     {
+                        //Evaluates 75 children with 25 possible parents
                         int parent1Index = j;
                         int parent2Index = (j + k) % bestChromosomes;
                         int childChromosomeIndex = k * bestChromosomes + j;
@@ -582,14 +609,16 @@ namespace OracleProject.Controllers
                     }
                 }
             }
+            //Sorts the array one final time
             Array.Sort(chromosomes, delegate (Chromosome chromosome1, Chromosome chromosome2)
             {
                 return chromosome1.totalDistance.CompareTo(chromosome2.totalDistance);
             });
-
+            //Returns the best chromosome
             return chromosomes[0];
         }
 
+        //Load all points
         public Point[] LoadPoints(int numberPoints)
         {
 
@@ -608,6 +637,7 @@ namespace OracleProject.Controllers
             return points;
         }
 
+        //Give points that belong to the cluster
         public Point[] getSubPoints(Point[] points, int cluster)
         {
             List<Point> subPoints = new List<Point>();
@@ -631,20 +661,37 @@ namespace OracleProject.Controllers
 
         public ActionResult Index()
         {
-            
+            //Gets the number of clusters
             int clusters = db.locations.Select(x => x.cluster).Distinct().Count();
+
+            //Defines the first number of points to be loaded
             int numberPoints = 50;
+
+            //Defines the number of tries you want to test
             int timesToRun = 1;
+
+            //Llena un arreglo de objetos  Point, con los valores de la base de datos
             Point[] points = new Point[numberPoints];
             points = LoadPoints(numberPoints);
+
+            //Loads the distances between the points, between the start and each point, and between the end and each point.
             globalDistances = loadDistances(numberPoints);
             distanceToEnd = distancesToEnd(numberPoints);
             distanceToStart = distancesToStart(numberPoints, clusters);
+
+            //Creates an array of chromosomes. 
             Chromosome[] chromosomes = new Chromosome[clusters];
+
+            //Array to store the time each method took and the number that each method won the shortest duration
             double[] times = new double[3];
             double[] won = new double[3];
+
+            //Array to store the locations in order. It is used in the View
             double[,,] coordinates2 = new double[clusters, 20, 2];
+            //Stores the location that marks the end of the route
             int[] lastLocation = new int[clusters];
+
+            //Loads the location info of the last point
             var end = db.locations.Where(x => x.LocationId == 100).FirstOrDefault();
             
 
@@ -657,9 +704,11 @@ namespace OracleProject.Controllers
                     Chromosome shortestPathChromosome2 = new Chromosome();
                     Chromosome shortestPathChromosome3 = new Chromosome();
                     Chromosome tmpChromosome = new Chromosome();
+                    //Loads an array of subPoints, they have to be on the same cluster
                     Point[] subPoints = getSubPoints(points, i);
                     if (subPoints.Length != 0)
                     {
+                        //For each cluster. Each of the 3 methods is going to be evaluated
                         var ordered = System.Diagnostics.Stopwatch.StartNew();
                         shortestPathChromosome1 = Solve(subPoints.Length, subPoints, 1);
                         ordered.Stop();
@@ -669,13 +718,14 @@ namespace OracleProject.Controllers
                         var scx = System.Diagnostics.Stopwatch.StartNew();
                         shortestPathChromosome3 = Solve(subPoints.Length, subPoints, 3);
                         scx.Stop();
+                        //Save the ammount of time each method took
                         times[0] += ordered.ElapsedMilliseconds;
                         times[1] += doubleOrdered.ElapsedMilliseconds;
                         times[2] += scx.ElapsedMilliseconds;
 
 
 
-
+                        //Evaluate which method give the Chromosome with less duration, that Chromosome is stored in the Array.
                         if (shortestPathChromosome1.totalDistance < shortestPathChromosome2.totalDistance)
                         {
                             if (shortestPathChromosome1.totalDistance < shortestPathChromosome3.totalDistance)
@@ -726,6 +776,7 @@ namespace OracleProject.Controllers
             }
 
 
+            //This method stores the winning chromosomes in the array that will be sent to the view
             for (int i = 0; i < clusters; i++)
             {
                 int id = clusterId[i];
@@ -744,7 +795,7 @@ namespace OracleProject.Controllers
                 lastLocation[i] = chromosomes[i].pointsNumber + 2;
             }
 
-
+            //saves the permutation in array to be sent to the view
             string message = "";
             List<List<int>> permutations = new List<List<int>>();
             double[] distance = new double[clusters];
@@ -758,6 +809,7 @@ namespace OracleProject.Controllers
                 method[i] = chromosomes[i].type;
             }
 
+            //Calculate statistics
             won[0] = (double)decimal.Divide((decimal)won[0], clusters * timesToRun)*100;
             won[1] = (double)decimal.Divide((decimal)won[1], clusters * timesToRun) * 100;
             won[2] = (double)decimal.Divide((decimal)won[2], clusters * timesToRun) * 100;
@@ -770,6 +822,8 @@ namespace OracleProject.Controllers
             times[1] = (times[1] / (clusters * timesToRun));
             times[2] = (times[2] / (clusters * timesToRun));
 
+
+            //Info to be sent to the View
             ViewBag.times = times;
             ViewBag.won = won;
             ViewBag.distance = distance;
